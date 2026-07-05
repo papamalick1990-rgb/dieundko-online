@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Espace vendeur — DIEUNDKO ONLINE</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+
+<div id="toast-holder"></div>
+
+<div id="admin-gate" class="admin-gate">
+  <div class="gate-card">
+    <span class="stamp-mini">DK</span>
+    <h2 style="font-size:20px; margin-bottom:6px;">Espace vendeur</h2>
+    <p style="font-size:13px; color:var(--ink-soft); margin-bottom:20px;">Entrez le mot de passe pour gérer le catalogue et les commandes.</p>
+    <div class="form-group">
+      <label>Mot de passe</label>
+      <input type="password" id="admin-password" placeholder="••••••••">
+    </div>
+    <div id="gate-error" class="hidden" style="color:var(--coral); font-size:12px; margin-bottom:10px;"></div>
+    <button class="btn btn-dark btn-block" id="gate-submit">Entrer</button>
+    <button class="btn btn-ghost btn-block" style="margin-top:8px;" id="gate-back">Retour à la boutique</button>
+  </div>
+</div>
+
+<div id="admin-shell" class="admin-shell hidden">
+  <div class="admin-topbar">
+    <div class="brand"><span class="stamp-mini">DK</span> ESPACE VENDEUR</div>
+    <a href="/" class="icon-btn" style="margin-left:auto; text-decoration:none;">Voir la boutique</a>
+    <button class="icon-btn" id="admin-logout-btn">Se déconnecter</button>
+  </div>
+  <div class="admin-tabs">
+    <button class="tab-btn active" data-tab="dashboard">Aperçu</button>
+    <button class="tab-btn" data-tab="products">Produits</button>
+    <button class="tab-btn" data-tab="orders">Commandes</button>
+    <button class="tab-btn" data-tab="categories">Catégories</button>
+  </div>
+  <div class="admin-content">
+
+    <div class="admin-section active" id="tab-dashboard">
+      <div class="stat-row" id="stat-row"></div>
+      <h3 style="font-size:15px; margin-bottom:10px;">Dernières commandes</h3>
+      <div class="table-wrap"><table><thead><tr><th>N˚</th><th>Client</th><th>Total</th><th>Statut</th><th>Date</th></tr></thead><tbody id="dashboard-orders-body"></tbody></table></div>
+    </div>
+
+    <div class="admin-section" id="tab-products">
+      <div class="admin-toolbar">
+        <h3 style="font-size:15px;">Catalogue (<span id="product-count">0</span>)</h3>
+        <button class="btn btn-dark" id="add-product-btn">+ Ajouter un produit</button>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th></th><th>Nom</th><th>SKU</th><th>Catégorie</th><th>Prix</th><th>Stock</th><th></th></tr></thead><tbody id="admin-products-body"></tbody></table></div>
+    </div>
+
+    <div class="admin-section" id="tab-orders">
+      <div class="admin-toolbar"><h3 style="font-size:15px;">Commandes reçues</h3></div>
+      <div class="table-wrap"><table><thead><tr><th>N˚</th><th>Client</th><th>Téléphone</th><th>Articles</th><th>Total</th><th>Paiement</th><th>Statut</th></tr></thead><tbody id="admin-orders-body"></tbody></table></div>
+    </div>
+
+    <div class="admin-section" id="tab-categories">
+      <div class="admin-toolbar"><h3 style="font-size:15px;">Catégories</h3></div>
+      <div class="form-row" style="max-width:420px; margin-bottom:18px;">
+        <div class="form-group"><input type="text" id="new-category-input" placeholder="Nouvelle catégorie…"></div>
+        <button class="btn btn-dark" id="add-category-btn" style="height:42px;">Ajouter</button>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Nom</th><th>Produits</th><th></th></tr></thead><tbody id="admin-categories-body"></tbody></table></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="overlay center" id="modal-overlay">
+  <div class="modal-box" id="modal-box"></div>
+</div>
+
+<script src="/js/admin.js"></script>
+</body>
+</html>
