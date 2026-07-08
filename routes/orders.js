@@ -2,6 +2,8 @@ const express = require('express');
 const crypto = require('crypto');
 const db = require('../db');
 const { requireAdmin } = require('../auth');
+const { notifyNewOrder: notifyWhatsApp } = require('../whatsapp');
+const { notifyNewOrder: notifyTelegram } = require('../telegram');
 
 const router = express.Router();
 
@@ -62,6 +64,8 @@ router.post('/', async (req, res) => {
   });
 
   if (result.error) return res.status(400).json({ error: result.error });
+  notifyWhatsApp(result.order); // envoi en arrière-plan, ne bloque jamais la réponse au client
+  notifyTelegram(result.order);
   res.status(201).json(result.order);
 });
 
