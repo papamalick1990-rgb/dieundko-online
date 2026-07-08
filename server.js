@@ -11,6 +11,7 @@ const productsRouter = require('./routes/products');
 const categoriesRouter = require('./routes/categories');
 const ordersRouter = require('./routes/orders');
 const authRouter = require('./routes/auth-route');
+const customersRouter = require('./routes/customers');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -23,7 +24,8 @@ app.use(cors());
 app.use(express.json({ limit: '2mb' }));
 
 // Dossier des images uploadées (servi tel quel)
-const uploadsDir = path.join(__dirname, 'uploads');
+// Rangé dans data/uploads pour rester protégé par le disque persistant Render.
+const uploadsDir = path.join(__dirname, 'data', 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 app.use('/uploads', express.static(uploadsDir));
 
@@ -32,6 +34,7 @@ app.use('/api/products', productsRouter);
 app.use('/api/categories', categoriesRouter);
 app.use('/api/orders', ordersRouter);
 app.use('/api/admin', authRouter);
+app.use('/api/customers', customersRouter);
 // Les routes protégées de produits/catégories/commandes sont déjà montées ci-dessus
 // (chaque route décide elle-même, via requireAdmin, si l'action nécessite une connexion).
 

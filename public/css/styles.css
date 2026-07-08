@@ -157,7 +157,8 @@ header.site-header{
 /* ---------- Filters ---------- */
 .filters-bar{
   display:flex; align-items:center; gap:10px; flex-wrap:wrap;
-  padding:22px 20px 6px; max-width:1180px; margin:0 auto; width:100%;
+  padding:16px 20px; max-width:1180px; margin:0 auto; width:100%;
+  border-bottom:1px solid var(--line);
 }
 .chip{
   padding:7px 14px; border-radius:100px; border:1px solid var(--line);
@@ -357,8 +358,33 @@ tr:last-child td{border-bottom:none;}
 .detail-price-row{display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;}
 .detail-price{font-family:'IBM Plex Mono'; font-size:26px; font-weight:700;}
 
-footer.site-footer{
-  background:var(--ink); color:rgba(237,234,226,.6); text-align:center; padding:22px; font-size:12px; font-family:'IBM Plex Mono';
+footer.site-footer-full{
+  background:var(--ink); color:rgba(237,234,226,.85); margin-top:24px;
+}
+.footer-inner{
+  max-width:1180px; margin:0 auto; padding:40px 20px 28px;
+  display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:32px;
+}
+.footer-brand{ font-family:'Archivo Black'; font-size:18px; color:#fff; margin-bottom:10px; }
+.footer-tagline{ font-size:13px; line-height:1.6; color:rgba(237,234,226,.65); max-width:320px; }
+.footer-col h4{
+  font-family:'IBM Plex Mono'; font-size:11px; text-transform:uppercase; letter-spacing:.06em;
+  color:var(--mustard); margin-bottom:12px; font-weight:700;
+}
+.footer-text{ font-size:13px; color:rgba(237,234,226,.65); margin-bottom:10px; line-height:1.5; }
+.footer-phone{
+  display:inline-flex; align-items:center; gap:6px; font-family:'IBM Plex Mono'; font-size:17px; font-weight:700;
+  color:#fff; background:var(--coral); padding:8px 14px; border-radius:var(--radius); text-decoration:none;
+}
+.footer-list{ list-style:none; display:flex; flex-direction:column; gap:8px; font-size:13px; color:rgba(237,234,226,.75); }
+.footer-list li::before{ content:'✓ '; color:var(--mustard); font-weight:700; }
+.footer-bottom{
+  border-top:1px solid rgba(237,234,226,.15); text-align:center; padding:16px 20px;
+  font-size:11px; font-family:'IBM Plex Mono'; color:rgba(237,234,226,.5);
+}
+
+@media (max-width:640px){
+  .footer-inner{ grid-template-columns:1fr; gap:24px; padding:32px 20px 20px; }
 }
 
 @media (max-width:640px){

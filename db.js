@@ -16,6 +16,7 @@ const DEFAULT_DATA = {
   categories: ['Alimentation', 'Vêtements', 'Électronique', 'Maison', 'Beauté', 'Autre'],
   products: [],
   orders: [],
+  customers: [],
   meta: {
     orderCounter: 1000,
   },

@@ -22,6 +22,10 @@
         <input id="search-input" type="text" placeholder="Chercher un article, une catégorie…">
       </div>
       <div class="header-actions">
+        <button class="icon-btn" id="account-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span id="account-label">Mon compte</span>
+        </button>
         <button class="icon-btn" id="cart-open-btn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
           Panier <span class="cart-count hidden" id="cart-count">0</span>
@@ -30,19 +34,12 @@
     </div>
   </header>
 
-  <section class="hero">
-    <div class="hero-inner">
-      <span class="eyebrow">Registre N˚ 001 — Marchandises diverses</span>
-      <h1>Un comptoir, tous les articles.</h1>
-      <p>Chaque produit mis en rayon ici est référencé, tamponné et prêt à partir. Parcourez le catalogue, remplissez votre bon de commande, et récupérez ou faites-vous livrer vos articles.</p>
-    </div>
-  </section>
+  <div class="filters-bar" id="filters-bar"></div>
 
   <section class="highlight-section" id="promo-section-wrap">
     <div class="container">
       <div class="section-head">
         <h2>🔥 En promotion</h2>
-        <span class="section-sub">Prix cassés, pour un temps limité</span>
       </div>
       <div class="promo-row" id="promo-row"></div>
     </div>
@@ -52,19 +49,37 @@
     <div class="container">
       <div class="section-head">
         <h2>★ Produits phares</h2>
-        <span class="section-sub">La sélection du comptoir</span>
       </div>
       <div class="featured-row" id="featured-row"></div>
     </div>
   </section>
 
-  <div class="filters-bar" id="filters-bar"></div>
-
   <div class="grid-wrap">
     <div class="product-grid" id="product-grid"></div>
   </div>
 
-  <footer class="site-footer">DIEUNDKO ONLINE — Catalogue tenu à jour par le vendeur · Dakar, Sénégal</footer>
+  <footer class="site-footer-full">
+    <div class="footer-inner">
+      <div class="footer-col footer-brand-col">
+        <div class="footer-brand">DIEUNDKO ONLINE</div>
+        <p class="footer-tagline">Votre comptoir en ligne pour toutes sortes d'articles — commandez depuis chez vous, à Dakar et partout au Sénégal.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Commander par téléphone</h4>
+        <p class="footer-text">Une question, ou vous préférez commander directement ?</p>
+        <a href="tel:+221769442539" class="footer-phone">📞 76 944 25 39</a>
+      </div>
+      <div class="footer-col">
+        <h4>Paiement & livraison</h4>
+        <ul class="footer-list">
+          <li>Wave</li>
+          <li>Orange Money</li>
+          <li>Paiement à la livraison</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2026 DIEUNDKO ONLINE — Dakar, Sénégal</div>
+  </footer>
 </div>
 
 <div class="overlay" id="cart-overlay">

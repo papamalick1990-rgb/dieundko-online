@@ -11,6 +11,8 @@ const State = {
   cart: JSON.parse(localStorage.getItem('dk_cart') || '[]'),
   activeCategory: 'Tous',
   searchTerm: '',
+  customerToken: localStorage.getItem('dk_customer_token') || null,
+  customer: null,
 };
 
 function fmtPrice(n){ return Number(n||0).toLocaleString('fr-FR') + ' FCFA'; }
@@ -37,6 +39,15 @@ async function apiPost(path, body){
     method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
   });
   const data = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(data.error || 'Une erreur est survenue.');
+  return data;
+}
+async function apiCustomerFetch(path, options = {}){
+  options.headers = options.headers || {};
+  if(State.customerToken) options.headers['Authorization'] = 'Bearer ' + State.customerToken;
+  const r = await fetch(API + path, options);
+  const data = await r.json().catch(()=>({}));
+  if(r.status === 401){ logoutCustomer(false); throw new Error(data.error || 'Session expirée.'); }
   if(!r.ok) throw new Error(data.error || 'Une erreur est survenue.');
   return data;
 }
@@ -289,17 +300,158 @@ function renderCartDrawer(){
   if(checkoutBtn) checkoutBtn.addEventListener('click', openCheckout);
 }
 
+/* ==================== ACCOUNT (customer login / register / orders) ==================== */
+function updateAccountLabel(){
+  const label = document.getElementById('account-label');
+  label.textContent = State.customer ? State.customer.name.split(' ')[0] : 'Mon compte';
+}
+
+async function loadCustomerSession(){
+  if(!State.customerToken) return;
+  try{
+    State.customer = await apiCustomerFetch('/customers/me');
+  }catch(e){
+    State.customerToken = null;
+    localStorage.removeItem('dk_customer_token');
+  }
+  updateAccountLabel();
+}
+
+function logoutCustomer(showMsg){
+  State.customerToken = null;
+  State.customer = null;
+  localStorage.removeItem('dk_customer_token');
+  updateAccountLabel();
+  if(showMsg !== false) showToast('Vous êtes déconnecté.', 'success');
+}
+
+function openAccountEntry(){
+  if(State.customer){ openAccountDashboard(); }
+  else{ openAuthModal('login'); }
+}
+
+function openAuthModal(mode){
+  const isLogin = mode !== 'register';
+  document.getElementById('modal-box').innerHTML = `
+    <div class="panel-header"><h3>${isLogin ? 'Connexion' : 'Créer un compte'}</h3><button class="close-x" id="modal-close">✕</button></div>
+    <div class="panel-body">
+      <div style="display:flex; gap:8px; margin-bottom:18px;">
+        <button class="btn ${isLogin?'btn-dark':'btn-ghost'} btn-sm" id="tab-login" style="flex:1;">Connexion</button>
+        <button class="btn ${!isLogin?'btn-dark':'btn-ghost'} btn-sm" id="tab-register" style="flex:1;">Créer un compte</button>
+      </div>
+      ${isLogin ? `
+        <div class="form-group"><label>Téléphone</label><input type="tel" id="auth-phone" placeholder="Ex : 77 123 45 67"></div>
+        <div class="form-group"><label>Mot de passe</label><input type="password" id="auth-password" placeholder="••••••••"></div>
+      ` : `
+        <div class="form-group"><label>Nom complet</label><input type="text" id="auth-name" placeholder="Ex : Awa Diop"></div>
+        <div class="form-group"><label>Téléphone</label><input type="tel" id="auth-phone" placeholder="Ex : 77 123 45 67"></div>
+        <div class="form-group"><label>Mot de passe</label><input type="password" id="auth-password" placeholder="6 caractères minimum"></div>
+      `}
+      <div id="auth-error" class="hidden" style="color:var(--coral); font-size:12px; margin-bottom:10px;"></div>
+      <button class="btn btn-dark btn-block" id="auth-submit">${isLogin ? 'Se connecter' : 'Créer mon compte'}</button>
+    </div>`;
+  openOverlay('modal-overlay');
+  document.getElementById('modal-close').addEventListener('click', ()=> closeOverlay('modal-overlay'));
+  document.getElementById('tab-login').addEventListener('click', ()=> openAuthModal('login'));
+  document.getElementById('tab-register').addEventListener('click', ()=> openAuthModal('register'));
+  document.getElementById('auth-submit').addEventListener('click', ()=> isLogin ? submitLogin() : submitRegister());
+}
+
+async function submitLogin(){
+  const phone = document.getElementById('auth-phone').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const errEl = document.getElementById('auth-error');
+  const btn = document.getElementById('auth-submit');
+  if(!phone || !password){ errEl.textContent = 'Merci de remplir tous les champs.'; errEl.classList.remove('hidden'); return; }
+  btn.disabled = true; btn.textContent = 'Connexion…';
+  try{
+    const data = await apiPost('/customers/login', { phone, password });
+    State.customerToken = data.token;
+    State.customer = data.customer;
+    localStorage.setItem('dk_customer_token', data.token);
+    updateAccountLabel();
+    closeOverlay('modal-overlay');
+    showToast('Bienvenue, ' + data.customer.name.split(' ')[0] + ' !', 'success');
+  }catch(e){
+    errEl.textContent = e.message; errEl.classList.remove('hidden');
+    btn.disabled = false; btn.textContent = 'Se connecter';
+  }
+}
+
+async function submitRegister(){
+  const name = document.getElementById('auth-name').value.trim();
+  const phone = document.getElementById('auth-phone').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const errEl = document.getElementById('auth-error');
+  const btn = document.getElementById('auth-submit');
+  if(!name || !phone || !password){ errEl.textContent = 'Merci de remplir tous les champs.'; errEl.classList.remove('hidden'); return; }
+  btn.disabled = true; btn.textContent = 'Création…';
+  try{
+    const data = await apiPost('/customers/register', { name, phone, password });
+    State.customerToken = data.token;
+    State.customer = data.customer;
+    localStorage.setItem('dk_customer_token', data.token);
+    updateAccountLabel();
+    closeOverlay('modal-overlay');
+    showToast('Compte créé, bienvenue ' + data.customer.name.split(' ')[0] + ' !', 'success');
+  }catch(e){
+    errEl.textContent = e.message; errEl.classList.remove('hidden');
+    btn.disabled = false; btn.textContent = 'Créer mon compte';
+  }
+}
+
+function orderStatusLabel(s){ return {en_attente:'En attente', traitee:'Traitée', annulee:'Annulée'}[s] || s; }
+
+async function openAccountDashboard(){
+  document.getElementById('modal-box').innerHTML = `
+    <div class="panel-header"><h3>Mon compte</h3><button class="close-x" id="modal-close">✕</button></div>
+    <div class="panel-body">
+      <p style="font-size:14px; margin-bottom:2px;"><strong>${escapeHtml(State.customer.name)}</strong></p>
+      <p style="font-size:13px; color:var(--ink-soft); margin-bottom:18px;">${escapeHtml(State.customer.phone)}</p>
+      <h4 style="font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft); margin-bottom:10px;">Mes commandes</h4>
+      <div id="my-orders-list"><p style="font-size:13px; color:var(--ink-soft);">Chargement…</p></div>
+      <button class="btn btn-ghost btn-block" id="logout-btn" style="margin-top:20px;">Se déconnecter</button>
+    </div>`;
+  openOverlay('modal-overlay');
+  document.getElementById('modal-close').addEventListener('click', ()=> closeOverlay('modal-overlay'));
+  document.getElementById('logout-btn').addEventListener('click', ()=>{ logoutCustomer(); closeOverlay('modal-overlay'); });
+
+  try{
+    const orders = await apiCustomerFetch('/customers/me/orders');
+    const listEl = document.getElementById('my-orders-list');
+    if(!listEl) return; // modal a pu être fermée entre-temps
+    if(orders.length === 0){
+      listEl.innerHTML = `<p style="font-size:13px; color:var(--ink-soft);">Vous n'avez pas encore passé de commande.</p>`;
+      return;
+    }
+    listEl.innerHTML = orders.map(o=> `
+      <div style="border:1px solid var(--line); border-radius:2px; padding:12px; margin-bottom:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span class="mono" style="font-weight:700; font-size:13px;">${escapeHtml(o.orderNumber)}</span>
+          <span class="status-pill status-${o.status}">${orderStatusLabel(o.status)}</span>
+        </div>
+        <div style="font-size:12px; color:var(--ink-soft); margin-bottom:4px;">${new Date(o.createdAt).toLocaleDateString('fr-FR')} · ${o.items.map(i=>i.qty+'× '+escapeHtml(i.name)).join(', ')}</div>
+        <div class="mono" style="font-weight:700; font-size:13px;">${fmtPrice(o.total)}</div>
+      </div>`).join('');
+  }catch(e){
+    const listEl = document.getElementById('my-orders-list');
+    if(listEl) listEl.innerHTML = `<p style="font-size:13px; color:var(--coral);">Impossible de charger vos commandes.</p>`;
+  }
+}
+
 /* ==================== CHECKOUT ==================== */
 function openCheckout(){
   if(State.cart.length===0) return;
   closeOverlay('cart-overlay');
   const total = cartTotal();
+  const c = State.customer;
   document.getElementById('modal-box').innerHTML = `
     <div class="panel-header"><h3>Finaliser la commande</h3><button class="close-x" id="modal-close">✕</button></div>
     <div class="panel-body">
-      <div class="form-group"><label>Nom complet</label><input type="text" id="ck-name" placeholder="Ex : Awa Diop"></div>
-      <div class="form-group"><label>Téléphone</label><input type="tel" id="ck-phone" placeholder="Ex : 77 123 45 67"></div>
-      <div class="form-group"><label>Adresse de livraison</label><textarea id="ck-address" rows="2" placeholder="Quartier, ville, point de repère…"></textarea></div>
+      ${c ? `<p style="font-size:12px; color:var(--sage); margin-bottom:12px;">Connecté en tant que ${escapeHtml(c.name)} — cette commande sera liée à votre compte.</p>` : ''}
+      <div class="form-group"><label>Nom complet</label><input type="text" id="ck-name" placeholder="Ex : Awa Diop" value="${c?escapeHtml(c.name):''}"></div>
+      <div class="form-group"><label>Téléphone</label><input type="tel" id="ck-phone" placeholder="Ex : 77 123 45 67" value="${c?escapeHtml(c.phone):''}"></div>
+      <div class="form-group"><label>Adresse de livraison</label><textarea id="ck-address" rows="2" placeholder="Quartier, ville, point de repère…">${c&&c.address?escapeHtml(c.address):''}</textarea></div>
       <div class="form-group">
         <label>Mode de paiement</label>
         <label class="radio-card checked"><input type="radio" name="pay" value="Paiement à la livraison" checked> Paiement à la livraison</label>
@@ -339,9 +491,13 @@ async function submitOrder(){
   submitBtn.textContent = 'Envoi en cours…';
   try{
     const items = State.cart.map(c=>({ productId: c.productId, qty: c.qty }));
-    const order = await apiPost('/orders', {
-      customerName: name, phone, address, paymentMethod: payment, items
+    const headers = { 'Content-Type': 'application/json' };
+    if(State.customerToken) headers['Authorization'] = 'Bearer ' + State.customerToken;
+    const r = await fetch(API + '/orders', {
+      method:'POST', headers, body: JSON.stringify({ customerName: name, phone, address, paymentMethod: payment, items })
     });
+    const order = await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(order.error || 'Une erreur est survenue.');
     State.cart = [];
     saveCart();
     await loadAll(); // recharger le catalogue (stock à jour)
@@ -387,6 +543,7 @@ function wireEvents(){
   document.getElementById('search-input').addEventListener('input', (e)=>{
     State.searchTerm = e.target.value; renderGrid();
   });
+  document.getElementById('account-btn').addEventListener('click', openAccountEntry);
   document.getElementById('cart-open-btn').addEventListener('click', ()=>{ renderCartDrawer(); openOverlay('cart-overlay'); });
   document.getElementById('cart-close-btn').addEventListener('click', ()=> closeOverlay('cart-overlay'));
   document.getElementById('cart-overlay').addEventListener('click', (e)=>{ if(e.target.id==='cart-overlay') closeOverlay('cart-overlay'); });
@@ -395,6 +552,7 @@ function wireEvents(){
 
 (async function boot(){
   await loadAll();
+  await loadCustomerSession();
   renderPromoRow();
   renderFeaturedRow();
   renderFilters();

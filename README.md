@@ -14,7 +14,7 @@ dieundko-backend/
   hash-password.js    → outil pour générer le hachage de votre mot de passe
   routes/             → les routes de l'API (produits, catégories, commandes, connexion)
   public/             → le site (vitrine + espace vendeur), servi par le serveur
-  uploads/            → images des produits importées depuis l'espace vendeur
+  data/uploads/       → images des produits importées depuis l'espace vendeur (protégées par le disque persistant, voir section 2)
   .env.example        → modèle du fichier de configuration secrète
 ```
 
@@ -84,6 +84,20 @@ quel service qui exécute du Node.js. Voici deux options gratuites pour démarre
 entre les redémarrages. Pour un usage sérieux, prenez une petite option payante
 avec disque persistant, ou passez à l'option B.
 
+**Disque persistant (obligatoire pour ne pas perdre vos données) :**
+Render ne permet qu'**un seul** disque persistant par site — c'est pourquoi ce
+projet range à la fois la base de données (`data/db.json`) et les images
+importées (`data/uploads/`) dans le **même dossier `data`**. Un seul disque
+suffit donc pour protéger les deux.
+
+1. Sur la page de votre service → onglet **Disks** → **Add Disk**
+2. **Mount Path** : `/opt/render/project/src/data`
+3. **Size** : 1 GB suffit pour commencer
+
+Si un jour vous voyez le mount path pointer ailleurs (par exemple sur un
+ancien dossier `uploads` séparé), corrigez-le vers `.../src/data` — sinon vos
+photos de produits disparaîtront à chaque redéploiement.
+
 ### Option B — Railway.app
 
 Même principe que Render : connectez votre dépôt GitHub, ajoutez les variables
@@ -131,7 +145,64 @@ Si vous avez un petit serveur (par exemple chez OVH, Contabo, DigitalOcean) :
 Allez directement sur `/admin.html` (par exemple `https://votresite.com/admin.html`).
 Ce lien n'apparaît nulle part sur la boutique publique.
 
-## 5. Produits phares et promotions
+## 5. Notifications à chaque nouvelle commande
+
+Vous pouvez recevoir un message automatique dès qu'un client passe une
+commande. Deux options sont disponibles, vous pouvez activer l'une, l'autre,
+ou les deux.
+
+### Option recommandée — Telegram (fiable, officielle, gratuite)
+
+1. Installez [Telegram](https://telegram.org) (gratuit)
+2. Cherchez le contact `@BotFather`, envoyez `/newbot`, suivez les instructions
+   (nom du bot, puis un nom d'utilisateur se terminant par "bot")
+3. BotFather vous donne un **token** — copiez-le
+4. Cherchez votre nouveau bot par son nom d'utilisateur, ouvrez la conversation,
+   cliquez **"Démarrer"** (les bots ne peuvent pas écrire en premier)
+5. Cherchez le contact `@userinfobot`, envoyez-lui un message : il répond
+   immédiatement avec votre identifiant ("Id: 123456789")
+6. Ajoutez ces variables d'environnement :
+   - `TELEGRAM_BOT_TOKEN` → le token de l'étape 3
+   - `TELEGRAM_CHAT_ID` → l'identifiant de l'étape 5
+
+### Option alternative — WhatsApp via CallMeBot (gratuite mais parfois capricieuse)
+
+Ce service tiers non-officiel envoie uniquement vers **votre propre numéro**
+(pas vers vos clients). Il peut mettre du temps à répondre, ou nécessiter
+plusieurs essais.
+
+1. Sur WhatsApp, ajoutez le contact indiqué sur [callmebot.com](https://www.callmebot.com/blog/free-api-whatsapp-messages/)
+   (le numéro change de temps en temps, vérifiez sur leur site)
+2. Envoyez-lui exactement : `I allow callmebot to send me messages`
+3. Vous recevrez une réponse contenant votre clé API
+4. Ajoutez ces variables d'environnement :
+   - `WHATSAPP_PHONE` → votre numéro avec l'indicatif pays, ex. `+221771234567`
+   - `WHATSAPP_APIKEY` → la clé reçue
+
+### Activer les notifications
+
+Ajoutez les variables choisies sur Render (**Environment** → **Add Environment
+Variable**), puis redéployez. Si aucune de ces variables n'est définie, le
+site fonctionne normalement, simplement sans notification.
+
+## 6. Comptes clients
+
+Les clients peuvent créer un compte (nom, téléphone, mot de passe) via le
+bouton **"Mon compte"** sur la boutique. Un compte n'est **jamais obligatoire**
+pour commander — la commande "invité" (sans compte) reste toujours possible.
+
+Ce que ça change pour le client connecté :
+- Son nom, téléphone et adresse sont pré-remplis à la commande
+- Il peut consulter l'historique et le **statut** de toutes ses commandes
+  passées (bouton "Mon compte" → liste des commandes)
+
+Ce que ça change pour vous :
+- Rien à faire — chaque commande passée par un client connecté est
+  automatiquement liée à son compte, en plus d'apparaître normalement dans
+  votre espace vendeur
+- Un client ne peut voir que **ses propres** commandes, jamais celles des autres
+
+## 7. Produits phares et promotions
 
 Dans l'espace vendeur, chaque produit peut être marqué comme :
 - **"Produit phare"** (case à cocher) → il apparaît dans la section "★ Produits phares" sur la page d'accueil
@@ -139,7 +210,7 @@ Dans l'espace vendeur, chaque produit peut être marqué comme :
 
 Ces deux sections n'apparaissent sur la page d'accueil que s'il y a au moins un produit correspondant — sinon elles restent invisibles pour ne pas laisser un espace vide. Le prix promotionnel est aussi celui utilisé pour calculer le total réel d'une commande (le client paie bien le prix affiché).
 
-## 6. Limites connues
+## 8. Limites connues
 
 - Pas de paiement en ligne réel intégré (le client choisit "paiement à la
   livraison", Wave ou Orange Money, et vous le contactez pour finaliser) —

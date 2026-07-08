@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const crypto = require('crypto');
 const db = require('../db');
 const { requireAdmin } = require('../auth');
@@ -8,8 +9,15 @@ const { requireAdmin } = require('../auth');
 const router = express.Router();
 
 // --- Configuration de l'upload d'images produits ---
+// IMPORTANT : les images sont stockées dans data/uploads (et non un dossier "uploads"
+// séparé à la racine), car seul le dossier "data" est protégé par le disque persistant
+// sur Render. Un site ne peut avoir qu'un seul disque persistant — en rangeant les
+// images ici, elles restent protégées sans avoir besoin d'un deuxième disque.
+const uploadsDir = path.join(__dirname, '..', 'data', 'uploads');
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
 const storage = multer.diskStorage({
-  destination: path.join(__dirname, '..', 'uploads'),
+  destination: uploadsDir,
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
     cb(null, crypto.randomUUID() + ext);

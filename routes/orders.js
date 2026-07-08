@@ -2,6 +2,7 @@ const express = require('express');
 const crypto = require('crypto');
 const db = require('../db');
 const { requireAdmin } = require('../auth');
+const { optionalCustomer } = require('../customerAuth');
 const { notifyNewOrder: notifyWhatsApp } = require('../whatsapp');
 const { notifyNewOrder: notifyTelegram } = require('../telegram');
 
@@ -27,7 +28,9 @@ function validateOrderInput(body) {
 }
 
 // POST /api/orders — création publique d'une commande (avec vérification serveur du stock)
-router.post('/', async (req, res) => {
+// optionalCustomer : si le client est connecté, la commande est liée à son compte
+// (pour qu'il puisse la suivre) ; sinon la commande fonctionne normalement en invité.
+router.post('/', optionalCustomer, async (req, res) => {
   const { errors, customerName, phone, address, paymentMethod, items } = validateOrderInput(req.body);
   if (errors.length) return res.status(400).json({ error: errors.join(' ') });
 
@@ -55,6 +58,7 @@ router.post('/', async (req, res) => {
     const order = {
       id: crypto.randomUUID(),
       orderNumber: 'CMD-' + data.meta.orderCounter,
+      customerId: req.customerId || null,
       customerName, phone, address, paymentMethod,
       items: resolvedItems, total, status: 'en_attente',
       createdAt: new Date().toISOString(),
